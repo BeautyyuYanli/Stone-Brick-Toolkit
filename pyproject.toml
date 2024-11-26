@@ -51,3 +51,7 @@ known-first-party = ["stone_brick"]
 [tool.pdm.scripts]
 fix = { shell = "ruff check --fix && ruff format" }
 check = { shell = 'ruff check && ruff format --check' }
+[dependency-groups]
+dev = [
+    "rich>=13.9.4",
+]
