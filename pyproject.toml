@@ -5,13 +5,25 @@ description = "Stone Brick is a toolkit providing some commonly used utilities."
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
 ]
-dependencies = []
+
 requires-python = ">=3.9"
 readme = "README.md"
 license = {text = "MIT"}
+urls = {"Repository"= "https://github.com/BeautyyuYanli/Stone-Brick-Toolkit"}
 
-[project.urls]
-Repository = "https://github.com/BeautyyuYanli/Stone-Brick-Toolkit"
+dependencies = []
+
+[project.optional-dependencies]
+llm = [
+    "tenacity>=9.0.0",
+    "openai>=1.55.1",
+]
+
+[dependency-groups]
+dev = [
+    "rich>=13.9.4",
+    "pytest>=8.3.3",
+]
 
 
 [build-system]
@@ -51,7 +63,7 @@ known-first-party = ["stone_brick"]
 [tool.pdm.scripts]
 fix = { shell = "ruff check --fix && ruff format" }
 check = { shell = 'ruff check && ruff format --check' }
-[dependency-groups]
-dev = [
-    "rich>=13.9.4",
-]
+
+
+[tool.pytest.ini_options]
+log_cli_level = "INFO"
