@@ -3,7 +3,11 @@ from unittest import TestCase
 
 from openai import OpenAI
 
-from stone_brick.llm.utils import generate_with_validation, oai_generate_with_retry
+from stone_brick.llm.utils import (
+    generate_with_validation,
+    oai_gen_with_retry_then_validate,
+    oai_generate_with_retry,
+)
 
 
 class TestLlmUtils(TestCase):
@@ -33,5 +37,14 @@ class TestLlmUtils(TestCase):
             generate_kwargs={
                 "temperature": 0.2,
             },
+        )
+        assert len(text) > 0
+
+    def test_oai_gen_with_retry_then_validate(self):
+        text = oai_gen_with_retry_then_validate(
+            oai_client=self.oai_client,
+            model="gpt-4o",
+            prompt=[{"role": "user", "content": "Hello, world!"}],
+            validator=lambda text: text,
         )
         assert len(text) > 0

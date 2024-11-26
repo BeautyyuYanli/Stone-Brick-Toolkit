@@ -16,12 +16,26 @@ logger = getLogger(__name__)
 
 T = TypeVar("T")
 
+MAX_API_ATTEMPTS = 5
+RETRY_API_WAIT_EXP_MULTIPLIER = 1
+RETRY_API_WAIT_EXP_MAX = 60
+MAX_VALIDATE_ATTEMPTS = 3
+
 
 def generate_with_validation(
     generator: Callable[[], str],
     validator: Callable[[str], T],
-    max_validate_attempts: int = 3,
+    max_validate_attempts: int = MAX_VALIDATE_ATTEMPTS,
 ) -> T:
+    """
+    Call the generator until the validator returns a valid result.
+
+    The validator should raise a GeneratedNotValid exception if the result is not valid.
+
+    Args:
+        max_validate_attempts: Maximum number of attempts to validate the text.
+    """
+
     @retry(
         stop=stop_after_attempt(max_validate_attempts),
         retry=retry_if_exception_type(GeneratedNotValid),
@@ -44,10 +58,18 @@ def oai_generate_with_retry(
     prompt: Iterable[ChatCompletionMessageParam],
     generate_kwargs: Optional[Dict[str, Any]] = None,
     *,
-    max_attempts: int = 5,
-    wait_exponential_multiplier: int = 1,
-    wait_exponential_max: int = 60,
+    max_attempts: int = MAX_API_ATTEMPTS,
+    wait_exponential_multiplier: int = RETRY_API_WAIT_EXP_MULTIPLIER,
+    wait_exponential_max: int = RETRY_API_WAIT_EXP_MAX,
 ) -> str:
+    """Call the OpenAI API until the response is valid.
+
+    Args:
+        max_attempts: Maximum number of attempts to call the API.
+        wait_exponential_multiplier: Multiplier for the exponential backoff.
+        wait_exponential_max: Maximum wait time in seconds.
+    """
+
     generate_kwargs = generate_kwargs or {}
 
     @retry(
@@ -76,3 +98,43 @@ def oai_generate_with_retry(
             raise
 
     return _oai_generate_with_retry()
+
+
+def oai_gen_with_retry_then_validate(
+    validator: Callable[[str], T],
+    oai_client: OpenAI,
+    model: str,
+    prompt: Iterable[ChatCompletionMessageParam],
+    generate_kwargs: Optional[Dict[str, Any]] = None,
+    *,
+    max_api_attempts: int = MAX_API_ATTEMPTS,
+    retry_api_wait_exp_multiplier: int = RETRY_API_WAIT_EXP_MULTIPLIER,
+    retry_api_wait_exp_max: int = RETRY_API_WAIT_EXP_MAX,
+    max_validate_attempts: int = MAX_VALIDATE_ATTEMPTS,
+) -> T:
+    """Call the OpenAI API until the response is valid, and use the validator to validate it.
+
+    It will use max_attempts to call the API to get a response,
+    and max_validate_attempts to validate the text.
+    That means at most max_attempts * max_validate_attempts API calls will be made.
+
+    Args:
+        max_api_attempts: Maximum number of attempts to call the API.
+        retry_api_wait_exp_multiplier: Multiplier for the exponential backoff.
+        retry_api_wait_exp_max: Maximum wait time in seconds.
+        max_validate_attempts: Maximum number of attempts to validate the text.
+    """
+
+    return generate_with_validation(
+        lambda: oai_generate_with_retry(
+            oai_client,
+            model,
+            prompt,
+            generate_kwargs,
+            max_attempts=max_api_attempts,
+            wait_exponential_multiplier=retry_api_wait_exp_multiplier,
+            wait_exponential_max=retry_api_wait_exp_max,
+        ),
+        validator,
+        max_validate_attempts=max_validate_attempts,
+    )
