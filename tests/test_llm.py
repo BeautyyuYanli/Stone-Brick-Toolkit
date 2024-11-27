@@ -1,7 +1,7 @@
 from typing import cast
-from unittest import TestCase
+from unittest import TestCase, IsolatedAsyncioTestCase
 
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 
 from stone_brick.llm.utils import (
     generate_with_validation,
@@ -10,12 +10,12 @@ from stone_brick.llm.utils import (
 )
 
 
-class TestLlmUtils(TestCase):
+class TestLlmUtils(IsolatedAsyncioTestCase):
     def setUp(self):
-        self.oai_client = OpenAI()
+        self.oai_client = AsyncOpenAI()
 
-    def test_generate_with_validation(self):
-        def generator():
+    async def test_generate_with_validation(self):
+        async def generator():
             return "Hello"
 
         def validator1(text):
@@ -24,13 +24,13 @@ class TestLlmUtils(TestCase):
         def validator2(text):
             return cast(str, text) == "world!"
 
-        validated = generate_with_validation(generator, validator1)
+        validated = await generate_with_validation(generator, validator1)
         assert validated
-        validated = generate_with_validation(generator, validator2)
+        validated = await generate_with_validation(generator, validator2)
         assert not validated
 
-    def test_oai_generate_with_retry(self):
-        text = oai_generate_with_retry(
+    async def test_oai_generate_with_retry(self):
+        text = await oai_generate_with_retry(
             oai_client=self.oai_client,
             model="gpt-4o",
             prompt=[{"role": "user", "content": "Hello, world!"}],
@@ -40,8 +40,8 @@ class TestLlmUtils(TestCase):
         )
         assert len(text) > 0
 
-    def test_oai_gen_with_retry_then_validate(self):
-        text = oai_gen_with_retry_then_validate(
+    async def test_oai_gen_with_retry_then_validate(self):
+        text = await oai_gen_with_retry_then_validate(
             oai_client=self.oai_client,
             model="gpt-4o",
             prompt=[{"role": "user", "content": "Hello, world!"}],

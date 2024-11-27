@@ -1,29 +1,31 @@
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Iterable, Optional, TypeVar
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from tenacity import (
     retry,
+    retry_if_exception,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
+    stop_never,
 )
 
 from stone_brick.llm.error import GeneratedEmpty, GeneratedNotValid
+from stone_brick.retry import stop_after_attempt_with_inf
 
 logger = getLogger(__name__)
 
 T = TypeVar("T")
 
-MAX_API_ATTEMPTS = 5
-RETRY_API_WAIT_EXP_MULTIPLIER = 1
-RETRY_API_WAIT_EXP_MAX = 60
+MAX_API_ATTEMPTS = -1
+MAX_EMPTY_TEXT_ATTEMPTS = 2
 MAX_VALIDATE_ATTEMPTS = 3
 
 
-def generate_with_validation(
-    generator: Callable[[], str],
+async def generate_with_validation(
+    generator: Callable[[], Awaitable[str]],
     validator: Callable[[str], T],
     max_validate_attempts: int = MAX_VALIDATE_ATTEMPTS,
 ) -> T:
@@ -33,15 +35,17 @@ def generate_with_validation(
     The validator should raise a GeneratedNotValid exception if the result is not valid.
 
     Args:
-        max_validate_attempts: Maximum number of attempts to validate the text.
+        max_validate_attempts: Maximum number of attempts to validate the text. If it
+            is -1, the validation will be retried indefinitely.
+            Default to 3.
     """
 
     @retry(
-        stop=stop_after_attempt(max_validate_attempts),
+        stop=stop_after_attempt_with_inf(max_validate_attempts),
         retry=retry_if_exception_type(GeneratedNotValid),
     )
-    def _generate_with_validation() -> T:
-        text = generator()
+    async def _generate_with_validation() -> T:
+        text = await generator()
 
         try:
             return validator(text)
@@ -49,38 +53,43 @@ def generate_with_validation(
             logger.info("Generated text can't be validated: %s", text)
             raise
 
-    return _generate_with_validation()
+    return await _generate_with_validation()
 
 
-def oai_generate_with_retry(
-    oai_client: OpenAI,
+async def oai_generate_with_retry(
+    oai_client: AsyncOpenAI,
     model: str,
     prompt: Iterable[ChatCompletionMessageParam],
     generate_kwargs: Optional[Dict[str, Any]] = None,
     *,
-    max_attempts: int = MAX_API_ATTEMPTS,
-    wait_exponential_multiplier: int = RETRY_API_WAIT_EXP_MULTIPLIER,
-    wait_exponential_max: int = RETRY_API_WAIT_EXP_MAX,
+    max_api_attempts: int = MAX_API_ATTEMPTS,
+    max_empty_attempts: int = MAX_EMPTY_TEXT_ATTEMPTS,
 ) -> str:
-    """Call the OpenAI API until the response is valid.
+    """Call the OpenAI API to generate text.
 
     Args:
-        max_attempts: Maximum number of attempts to call the API.
-        wait_exponential_multiplier: Multiplier for the exponential backoff.
-        wait_exponential_max: Maximum wait time in seconds.
+        max_api_attempts: Maximum number of attempts to call the API, with exponential
+            backoff. If it is -1, the API will be called indefinitely.
+            Default to -1.
+        max_empty_attempts: Maximum number of attempts to call the API if the generated
+            text is empty. If it is -1, the API will be called indefinitely.
+            Default to 2.
     """
 
     generate_kwargs = generate_kwargs or {}
 
     @retry(
-        stop=stop_after_attempt(max_attempts),
-        wait=wait_exponential(
-            multiplier=wait_exponential_multiplier, max=wait_exponential_max
-        ),
+        stop=stop_after_attempt_with_inf(max_empty_attempts),
+        retry=retry_if_exception_type(GeneratedEmpty),
     )
-    def _oai_generate_with_retry() -> str:
+    @retry(
+        stop=stop_after_attempt_with_inf(max_api_attempts),
+        wait=wait_exponential(max=60),
+        retry=retry_if_exception(lambda exc: not isinstance(exc, GeneratedEmpty)),
+    )
+    async def _oai_generate_with_retry() -> str:
         try:
-            response = oai_client.chat.completions.create(
+            response = await oai_client.chat.completions.create(
                 model=model,
                 messages=prompt,
                 stream=False,
@@ -97,19 +106,18 @@ def oai_generate_with_retry(
             logger.warning("OpenAI API call failed", exc_info=True)
             raise
 
-    return _oai_generate_with_retry()
+    return await _oai_generate_with_retry()
 
 
-def oai_gen_with_retry_then_validate(
+async def oai_gen_with_retry_then_validate(
     validator: Callable[[str], T],
-    oai_client: OpenAI,
+    oai_client: AsyncOpenAI,
     model: str,
     prompt: Iterable[ChatCompletionMessageParam],
     generate_kwargs: Optional[Dict[str, Any]] = None,
     *,
     max_api_attempts: int = MAX_API_ATTEMPTS,
-    retry_api_wait_exp_multiplier: int = RETRY_API_WAIT_EXP_MULTIPLIER,
-    retry_api_wait_exp_max: int = RETRY_API_WAIT_EXP_MAX,
+    max_empty_attempts: int = MAX_EMPTY_TEXT_ATTEMPTS,
     max_validate_attempts: int = MAX_VALIDATE_ATTEMPTS,
 ) -> T:
     """Call the OpenAI API until the response is valid, and use the validator to validate it.
@@ -119,21 +127,22 @@ def oai_gen_with_retry_then_validate(
     That means at most max_attempts * max_validate_attempts API calls will be made.
 
     Args:
-        max_api_attempts: Maximum number of attempts to call the API.
-        retry_api_wait_exp_multiplier: Multiplier for the exponential backoff.
-        retry_api_wait_exp_max: Maximum wait time in seconds.
-        max_validate_attempts: Maximum number of attempts to validate the text.
+        max_api_attempts: Maximum number of attempts to call the API, with exponential
+            backoff. -1 means infinite. Default to -1.
+        max_empty_attempts: Maximum number of attempts to call the API if the generated
+            text is empty. -1 means infinite. Default to 2.
+        max_validate_attempts: Maximum number of attempts to validate the text. -1
+            means infinite. Default to 3.
     """
 
-    return generate_with_validation(
+    return await generate_with_validation(
         lambda: oai_generate_with_retry(
             oai_client,
             model,
             prompt,
             generate_kwargs,
-            max_attempts=max_api_attempts,
-            wait_exponential_multiplier=retry_api_wait_exp_multiplier,
-            wait_exponential_max=retry_api_wait_exp_max,
+            max_api_attempts=max_api_attempts,
+            max_empty_attempts=max_empty_attempts,
         ),
         validator,
         max_validate_attempts=max_validate_attempts,
