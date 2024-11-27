@@ -1,7 +1,7 @@
 from typing import cast
-from unittest import TestCase, IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase
 
-from openai import OpenAI, AsyncOpenAI
+from openai import AsyncOpenAI
 
 from stone_brick.llm.utils import (
     generate_with_validation,
