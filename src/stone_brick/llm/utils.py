@@ -48,7 +48,7 @@ async def generate_with_validation(
         try:
             return validator(text)
         except GeneratedNotValid:
-            logger.info("Generated text can't be validated: %s", text)
+            logger.warning("Generated text can't be validated: %s", text)
             raise
 
     return await _generate_with_validation()
