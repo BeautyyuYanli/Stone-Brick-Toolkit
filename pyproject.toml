@@ -14,12 +14,18 @@ urls = {"Repository"= "https://github.com/BeautyyuYanli/Stone-Brick-Toolkit"}
 dependencies = []
 
 [project.optional-dependencies]
+all = [
+    "stone-brick-toolkit[llm, retry, observability]",
+]
 llm = [
-    "tenacity>=9.0.0",
+    "stone-brick-toolkit[retry, observability]",
     "openai>=1.55.1",
 ]
 retry = [
     "tenacity>=9.0.0",
+]
+observability = [
+    "opentelemetry-api>=1.28.2",
 ]
 
 [dependency-groups]

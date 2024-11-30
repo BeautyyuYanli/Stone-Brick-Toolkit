@@ -11,11 +11,12 @@ from tenacity import (
 )
 
 from stone_brick.llm.error import GeneratedEmpty, GeneratedNotValid
+from stone_brick.observability import instrument
 from stone_brick.retry import stop_after_attempt_with_inf
 
 logger = getLogger(__name__)
-
 T = TypeVar("T")
+
 
 MAX_API_ATTEMPTS = -1
 MAX_EMPTY_TEXT_ATTEMPTS = 2
@@ -42,14 +43,15 @@ async def generate_with_validation(
         stop=stop_after_attempt_with_inf(max_validate_attempts),
         retry=retry_if_exception_type(GeneratedNotValid),
     )
+    @instrument
     async def _generate_with_validation() -> T:
         text = await generator()
 
         try:
             return validator(text)
-        except GeneratedNotValid:
-            logger.warning("Generated text can't be validated: %s", text)
-            raise
+        except Exception as e:
+            # logger.warning("Generated text can't be validated: %s", text)
+            raise GeneratedNotValid("Generated text can't be validated: ", text) from e
 
     return await _generate_with_validation()
 
@@ -85,6 +87,7 @@ async def oai_generate_with_retry(
         wait=wait_exponential(max=60),
         retry=retry_if_exception(lambda exc: not isinstance(exc, GeneratedEmpty)),
     )
+    @instrument
     async def _oai_generate_with_retry() -> str:
         try:
             response = await oai_client.chat.completions.create(
@@ -107,6 +110,7 @@ async def oai_generate_with_retry(
     return await _oai_generate_with_retry()
 
 
+@instrument
 async def oai_gen_with_retry_then_validate(
     validator: Callable[[str], T],
     oai_client: AsyncOpenAI,
