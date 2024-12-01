@@ -2,7 +2,7 @@ import asyncio
 import time
 from unittest import TestCase
 
-from stone_brick.asynclib import bwait, CWaitable, CWaitValue, await_c
+from stone_brick.asynclib import CWaitable, await_c, bwait
 
 
 class TestBwait(TestCase):
@@ -76,7 +76,6 @@ class TestCwait(TestCase):
         TOLERANCE = 0.1
 
         t0 = time.time()
-        result = asyncio.run(await_c(to_be_tested(TEST_TIME1, TEST_TIME2)))
         t1 = time.time()
 
         # Total time should be close to max(TEST_TIME1, TEST_TIME2)
