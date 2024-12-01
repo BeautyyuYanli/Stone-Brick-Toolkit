@@ -76,6 +76,7 @@ class TestCwait(TestCase):
         TOLERANCE = 0.1
 
         t0 = time.time()
+        asyncio.run(await_c(to_be_tested(TEST_TIME1, TEST_TIME2)))
         t1 = time.time()
 
         # Total time should be close to max(TEST_TIME1, TEST_TIME2)
