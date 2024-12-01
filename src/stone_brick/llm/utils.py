@@ -18,7 +18,7 @@ logger = getLogger(__name__)
 T = TypeVar("T")
 
 
-MAX_API_ATTEMPTS = -1
+MAX_API_ATTEMPTS = 6
 MAX_EMPTY_TEXT_ATTEMPTS = 2
 MAX_VALIDATE_ATTEMPTS = 3
 
@@ -36,7 +36,6 @@ async def generate_with_validation(
     Args:
         max_validate_attempts: Maximum number of attempts to validate the text. If it
             is -1, the validation will be retried indefinitely.
-            Default to 3.
     """
 
     @retry(
@@ -70,10 +69,8 @@ async def oai_generate_with_retry(
     Args:
         max_api_attempts: Maximum number of attempts to call the API, with exponential
             backoff. If it is -1, the API will be called indefinitely.
-            Default to -1.
         max_empty_attempts: Maximum number of attempts to call the API if the generated
             text is empty. If it is -1, the API will be called indefinitely.
-            Default to 2.
     """
 
     generate_kwargs = generate_kwargs or {}
@@ -130,11 +127,11 @@ async def oai_gen_with_retry_then_validate(
 
     Args:
         max_api_attempts: Maximum number of attempts to call the API, with exponential
-            backoff. -1 means infinite. Default to -1.
+            backoff. -1 means infinite.
         max_empty_attempts: Maximum number of attempts to call the API if the generated
-            text is empty. -1 means infinite. Default to 2.
+            text is empty. -1 means infinite.
         max_validate_attempts: Maximum number of attempts to validate the text. -1
-            means infinite. Default to 3.
+            means infinite.
     """
 
     return await generate_with_validation(
