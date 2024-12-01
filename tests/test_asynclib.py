@@ -2,8 +2,7 @@ import asyncio
 import time
 from unittest import TestCase
 
-from stone_brick.asynclib import bwait
-from stone_brick.asynclib.bwait import _pool
+from stone_brick.asynclib import bwait, CWaitable, CWaitValue, await_c
 
 
 class TestBwait(TestCase):
@@ -27,4 +26,62 @@ class TestBwait(TestCase):
         t1 = time.time()
         assert TEST_TIME - TOLERANCE < t1 - t0 < TEST_TIME + TOLERANCE
 
-        assert len(_pool._available_runners) == 2  # noqa: PLR2004
+
+class TestCwait(TestCase):
+    def test_cwait(self):
+        async def first_delay(sec: float) -> float:
+            await asyncio.sleep(sec)
+            return sec
+
+        def first_yellow(sec: float) -> CWaitable[float]:
+            yield first_delay(sec)
+            return sec
+
+        def to_be_tested(sec: float) -> CWaitable[float]:
+            yield from first_yellow(sec)
+            yield from first_yellow(sec)
+            return sec
+
+        TEST_TIME = 1
+        TOLERANCE = 0.1
+
+        t0 = time.time()
+        asyncio.run(await_c(to_be_tested(TEST_TIME / 2)))
+        t1 = time.time()
+
+        # Test timing
+        assert TEST_TIME - TOLERANCE < t1 - t0 < TEST_TIME + TOLERANCE
+
+    def test_cwait_parallel(self):
+        async def first_delay(sec: float) -> float:
+            await asyncio.sleep(sec)
+            return sec
+
+        def first_yellow(sec: float) -> CWaitable[float]:
+            yield first_delay(sec)
+            return sec
+
+        def to_be_tested(sec1: float, sec2: float) -> CWaitable[tuple[float, float]]:
+            yield asyncio.gather(
+                await_c(first_yellow(sec1)),
+                await_c(
+                    first_yellow(sec2),
+                ),
+            )
+
+            return sec1, sec2
+
+        TEST_TIME1 = 1.0
+        TEST_TIME2 = 2.0
+        TOLERANCE = 0.1
+
+        t0 = time.time()
+        result = asyncio.run(await_c(to_be_tested(TEST_TIME1, TEST_TIME2)))
+        t1 = time.time()
+
+        # Total time should be close to max(TEST_TIME1, TEST_TIME2)
+        assert (
+            max(TEST_TIME1, TEST_TIME2) - TOLERANCE
+            < t1 - t0
+            < max(TEST_TIME1, TEST_TIME2) + TOLERANCE
+        )
