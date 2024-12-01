@@ -32,3 +32,8 @@ jobs:
     - name: Run tests
       run: |
         pytest tests/
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+        TEST_OPENAI_MODEL: ${{ env.TEST_OPENAI_MODEL }}
+      

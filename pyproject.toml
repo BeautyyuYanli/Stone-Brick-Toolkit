@@ -28,26 +28,10 @@ observability = [
     "opentelemetry-api>=1.28.2",
 ]
 
-[dependency-groups]
-dev = [
-    "rich>=13.9.4",
-    "pytest>=8.3.3",
-]
-
-
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-
-[tool.pdm]
-distribution = true
-
-
-[tool.pdm.dev-dependencies]
-dev = [
-    "ruff>=0.8.1",
-]
 [tool.pyright]
 venvPath = ".venv"
 
@@ -73,10 +57,23 @@ ignore = [
 known-first-party = ["stone_brick"]
 
 
+[tool.pytest.ini_options]
+log_cli_level = "INFO"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "ruff>=0.8.1",
+    "python-dotenv>=1.0.1",
+    "pytest>=8.3.3",
+    "rich>=13.9.4",
+]
+
+
 [tool.pdm.scripts]
 fix = { shell = "ruff check --fix && ruff format" }
 check = { shell = 'ruff check && ruff format --check' }
 
 
-[tool.pytest.ini_options]
-log_cli_level = "INFO"
