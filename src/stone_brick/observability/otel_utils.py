@@ -17,8 +17,8 @@ T = TypeVar("T")
 
 
 @cache
-def _get_full_name(func):
-    return func.__module__ + "." + func.__name__
+def _get_name(func):
+    return func.__name__
 
 
 @cache
@@ -32,7 +32,7 @@ def instrument(func: Callable[P, T]) -> Callable[P, T]:
     if trace is None:
         return func
     tracer = _get_tracer(func.__module__)
-    return tracer.start_as_current_span(_get_full_name(func))(func)  # type: ignore
+    return tracer.start_as_current_span(_get_name(func))(func)  # type: ignore
 
 
 def instrument_cwaitable(
@@ -49,4 +49,4 @@ def get_span(func):
     if trace is None:
         return contextmanager(lambda: iter([()]))()
     tracer = _get_tracer(func.__module__)
-    return tracer.start_as_current_span(_get_full_name(func))
+    return tracer.start_as_current_span(_get_name(func))

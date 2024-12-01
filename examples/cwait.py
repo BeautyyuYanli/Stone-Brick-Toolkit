@@ -70,6 +70,7 @@ if __name__ == "__main__":
     from time import time
 
     # import logfire
+
     # logfire.configure()
     # logging.basicConfig(level=logging.INFO, handlers=[logfire.LogfireLoggingHandler()])
 
