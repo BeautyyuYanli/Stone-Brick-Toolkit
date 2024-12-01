@@ -18,7 +18,7 @@ all = [
     "stone-brick-toolkit[llm, retry, observability]",
 ]
 llm = [
-    "stone-brick-toolkit[retry, observability]",
+    "stone-brick-toolkit[retry]",
     "openai>=1.55.1",
 ]
 retry = [
@@ -44,6 +44,10 @@ build-backend = "pdm.backend"
 distribution = true
 
 
+[tool.pdm.dev-dependencies]
+dev = [
+    "ruff>=0.8.1",
+]
 [tool.pyright]
 venvPath = ".venv"
 

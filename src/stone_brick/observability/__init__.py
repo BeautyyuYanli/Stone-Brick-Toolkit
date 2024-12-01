@@ -1,3 +1,7 @@
-from stone_brick.observability.utils import instrument
+from stone_brick.observability.otel_utils import (
+    get_span,
+    instrument,
+    instrument_cwaitable,
+)
 
-__all__ = ["instrument"]
+__all__ = ["get_span", "instrument", "instrument_cwaitable"]

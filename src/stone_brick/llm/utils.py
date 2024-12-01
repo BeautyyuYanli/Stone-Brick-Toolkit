@@ -12,7 +12,7 @@ from tenacity import (
 
 from stone_brick.llm.error import GeneratedEmpty, GeneratedNotValid
 from stone_brick.observability import instrument
-from stone_brick.retry import stop_after_attempt_with_inf
+from stone_brick.retry import stop_after_attempt_may_inf
 
 logger = getLogger(__name__)
 T = TypeVar("T")
@@ -40,7 +40,7 @@ async def generate_with_validation(
     """
 
     @retry(
-        stop=stop_after_attempt_with_inf(max_validate_attempts),
+        stop=stop_after_attempt_may_inf(max_validate_attempts),
         retry=retry_if_exception_type(GeneratedNotValid),
     )
     @instrument
@@ -79,11 +79,11 @@ async def oai_generate_with_retry(
     generate_kwargs = generate_kwargs or {}
 
     @retry(
-        stop=stop_after_attempt_with_inf(max_empty_attempts),
+        stop=stop_after_attempt_may_inf(max_empty_attempts),
         retry=retry_if_exception_type(GeneratedEmpty),
     )
     @retry(
-        stop=stop_after_attempt_with_inf(max_api_attempts),
+        stop=stop_after_attempt_may_inf(max_api_attempts),
         wait=wait_exponential(max=60),
         retry=retry_if_exception(lambda exc: not isinstance(exc, GeneratedEmpty)),
     )

@@ -2,7 +2,9 @@ import re
 from typing import List, Tuple, Union
 
 
-def tags_from_text(text: str, tags: list[str]) -> List[Union[Tuple[str, str], str]]:
+def flat_xml_tags_from_text(
+    text: str, tags: list[str]
+) -> List[Union[Tuple[str, str], str]]:
     """Support extract tags from text, without nested
 
     Ouput would be like: ["some text", ("Tag1", "content"), "some text", ("Tag2", "content2")]
