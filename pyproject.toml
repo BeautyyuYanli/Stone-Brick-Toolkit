@@ -1,6 +1,6 @@
 [project]
 name = "stone-brick-toolkit"
-version = "0.6.1"
+version = "0.6.2"
 description = "Stone Brick is a toolkit providing some commonly used utilities."
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
@@ -22,7 +22,7 @@ llm = [
     "openai>=1.55.1",
 ]
 retry = [
-    "tenacity>=9.0.0",
+    "tenacity>=8.5.0",
 ]
 observability = [
     "opentelemetry-api>=1.28.2",
