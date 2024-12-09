@@ -1,6 +1,6 @@
 [project]
 name = "stone-brick-toolkit"
-version = "0.6.2"
+version = "0.6.3"
 description = "Stone Brick is a toolkit providing some commonly used utilities."
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
