@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from functools import cache
-from typing import TYPE_CHECKING, Callable, TypeVar, Generator, AsyncGenerator, cast
+from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator, TypeVar
 
 from typing_extensions import ParamSpec
 
@@ -38,9 +38,8 @@ def instrument(func: Callable[P, T]) -> Callable[P, T]:
 
 
 def instrument_async_generator(
-    func: Callable[P, "AsyncGenerator[T, None]"]
+    func: Callable[P, "AsyncGenerator[T, None]"],
 ) -> Callable[P, "AsyncGenerator[T, None]"]:
-
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> "AsyncGenerator[T, None]":
         with get_span(func):
             async for v in func(*args, **kwargs):
@@ -50,7 +49,7 @@ def instrument_async_generator(
 
 
 def instrument_generator(
-    func: Callable[P, "Generator[T, T1, T2]"]
+    func: Callable[P, "Generator[T, T1, T2]"],
 ) -> Callable[P, "Generator[T, T1, T2]"]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> "Generator[T, T1, T2]":
         with get_span(func):

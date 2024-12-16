@@ -11,7 +11,6 @@ from tenacity import (
 )
 
 from stone_brick.llm.error import GeneratedEmpty, GeneratedNotValid
-from stone_brick.observability import instrument
 from stone_brick.retry import stop_after_attempt_may_inf
 
 logger = getLogger(__name__)

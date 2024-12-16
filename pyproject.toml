@@ -15,7 +15,7 @@ dependencies = []
 
 [project.optional-dependencies]
 all = [
-    "stone-brick-toolkit[llm, retry, observability]",
+    "stone-brick-toolkit[llm, retry, observability, auth-all]",
 ]
 llm = [
     "stone-brick-toolkit[retry]",
@@ -27,6 +27,24 @@ retry = [
 observability = [
     "opentelemetry-api>=1.28.2",
 ]
+encryptlib = [
+    "pydantic>=2.10.3",
+    "pyjwt>=2.10.1",
+]
+oauthlogin = [
+    "pydantic>=2.10.3",
+]
+oauthlogin-google = [
+    "stone-brick-toolkit[oauthlogin]",
+    "anyio>=4.7.0",
+    "google-api-python-client>=2.155.0",
+    "google-auth-oauthlib>=1.2.1",
+]
+oauthlogin-all = [
+    "stone-brick-toolkit[auth-oauth-google]",
+]
+
+
 
 [build-system]
 requires = ["pdm-backend"]
@@ -70,6 +88,7 @@ dev = [
     "pytest>=8.3.3",
     "rich>=13.9.4",
     "logfire>=2.5.0",
+    "fastapi>=0.115.6",
 ]
 
 
