@@ -77,7 +77,7 @@ async def flow_finish_google(
     config: OAuthGoogleConfig,
     code: str,
 ) -> GoogleCredentials:
-    """Blocking OAuth authorization flow finish"""
+    """OAuth authorization flow finish"""
     flow = _new_flow(config)
     try:
         await anyio.to_thread.run_sync(lambda: flow.fetch_token(code=code))
@@ -98,7 +98,7 @@ async def flow_finish_google(
 
 
 async def get_google_user_info(credentials: GoogleCredentials):
-    """Blocking OAuth authorization flow get user info"""
+    """OAuth authorization flow get user info"""
     service = build("people", "v1", credentials=credentials)
     try:
         results = await anyio.to_thread.run_sync(
