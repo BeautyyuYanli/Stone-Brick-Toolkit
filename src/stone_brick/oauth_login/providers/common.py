@@ -30,7 +30,7 @@ class UserInfo(BaseModel):
     photo_url: str
 
 
-class BaseOAuthLoginProvider(ABC, BaseModel):
+class BaseOAuthLoginProvider(ABC):
     @abstractmethod
     def get_authorization_url(self, state: str) -> str: ...
 

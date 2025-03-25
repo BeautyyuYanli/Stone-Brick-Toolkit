@@ -2,6 +2,7 @@ import logging
 from dataclasses import field
 from typing import Union, cast
 
+from pydantic import BaseModel
 import anyio
 import anyio.to_thread
 from google.auth.external_account_authorized_user import (
@@ -137,11 +138,8 @@ async def get_google_user_info(credentials: GoogleCredentials):
     return cast(str, email), cast(str, name), cast(str, photo_url)
 
 
-class GoogleOAuthLoginProvider(BaseOAuthLoginProvider):
+class GoogleOAuthLoginProvider(BaseOAuthLoginProvider, BaseModel):
     config: OAuthGoogleConfig
-
-    def __init__(self, config: OAuthGoogleConfig):
-        self.config = config
 
     def get_authorization_url(self, state: str) -> str:
         return flow_start_google(self.config, state)
