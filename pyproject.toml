@@ -43,6 +43,9 @@ oauthlogin-google = [
 oauthlogin-all = [
     "stone-brick-toolkit[auth-oauth-google]",
 ]
+demos = [
+    "sqlmodel>=0.0.24",
+]
 
 
 
@@ -81,7 +84,13 @@ log_cli_level = "INFO"
 [tool.pdm]
 distribution = true
 
-[tool.pdm.dev-dependencies]
+[tool.pdm.scripts]
+fix = { shell = "ruff check --fix && ruff format" }
+check = { shell = 'ruff check && ruff format --check' }
+
+
+
+[dependency-groups]
 dev = [
     "ruff>=0.8.1",
     "python-dotenv>=1.0.1",
@@ -89,11 +98,5 @@ dev = [
     "rich>=13.9.4",
     "logfire>=2.5.0",
     "fastapi>=0.115.6",
+    "sqlmodel",
 ]
-
-
-[tool.pdm.scripts]
-fix = { shell = "ruff check --fix && ruff format" }
-check = { shell = 'ruff check && ruff format --check' }
-
-
