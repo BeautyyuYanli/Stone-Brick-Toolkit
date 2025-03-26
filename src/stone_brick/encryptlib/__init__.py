@@ -1,5 +1,5 @@
 from jwt.exceptions import PyJWTError
 
-from stone_brick.encryptlib.jwt import JWTBase
+from stone_brick.encryptlib.jwt import JWT
 
-__all__ = ["JWTBase", "PyJWTError"]
+__all__ = ["JWT", "PyJWTError"]

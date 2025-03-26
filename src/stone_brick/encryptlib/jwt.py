@@ -1,12 +1,13 @@
-from typing import Optional, Sequence, Type, TypeVar, Union
+from typing import Generic, Optional, Self, Sequence, TypeVar, Union
 
 from jwt import decode, encode
 from pydantic import BaseModel
 
-T = TypeVar("T", bound="JWTBase")
+T = TypeVar("T")
 
 
-class JWTBase(BaseModel):
+class JWT(BaseModel, Generic[T]):
+    payload: T
     iss: Optional[str] = None  # Issuer
     sub: Optional[str] = None  # Subject
     aud: Optional[Union[str, Sequence[str]]] = None  # Audience
@@ -17,13 +18,15 @@ class JWTBase(BaseModel):
 
     @classmethod
     def decode(
-        cls: Type[T],
+        cls,
         key: bytes,
         encoded: str,
         algorithm: Sequence[str] = ("HS256",),
-    ) -> T:
+    ) -> Self:
         decoded = decode(encoded, key, algorithms=algorithm)
         return cls.model_validate(decoded)
 
     def encode(self, key: bytes, algorithm: str = "HS256") -> str:
-        return encode(self.model_dump(exclude_none=True), key, algorithm=algorithm)
+        return encode(
+            self.model_dump(mode="json", exclude_none=True), key, algorithm=algorithm
+        )
