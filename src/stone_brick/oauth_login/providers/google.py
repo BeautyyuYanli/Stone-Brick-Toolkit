@@ -2,7 +2,6 @@ import logging
 from dataclasses import field
 from typing import Union, cast
 
-from pydantic import BaseModel
 import anyio
 import anyio.to_thread
 from google.auth.external_account_authorized_user import (
@@ -12,6 +11,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from oauthlib.oauth2.rfc6749.errors import OAuth2Error
+from pydantic import BaseModel
 
 from stone_brick.oauth_login.providers.common import (
     BaseOAuthLoginProvider,
