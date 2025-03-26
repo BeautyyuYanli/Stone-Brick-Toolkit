@@ -15,7 +15,7 @@ dependencies = []
 
 [project.optional-dependencies]
 all = [
-    "stone-brick-toolkit[llm, retry, observability, auth-all]",
+    "stone-brick-toolkit[llm, retry, observability, encryptlib, oauthlogin-all, backend]",
 ]
 llm = [
     "stone-brick-toolkit[retry]",
@@ -41,10 +41,13 @@ oauthlogin-google = [
     "google-auth-oauthlib>=1.2.1",
 ]
 oauthlogin-all = [
-    "stone-brick-toolkit[auth-oauth-google]",
+    "stone-brick-toolkit[oauthlogin-google]",
 ]
-demos = [
+backend = [
+    "stone-brick-toolkit[oauthlogin-all]",
     "sqlmodel>=0.0.24",
+    "uvicorn>=0.34.0",
+    "asyncpg>=0.30.0",
 ]
 
 
