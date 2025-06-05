@@ -1,6 +1,6 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Awaitable, Callable, Literal, TypeVar
+from typing import Awaitable, Callable, Literal, Type, TypeVar, Union
 
 from typing_extensions import ParamSpec
 
@@ -15,21 +15,26 @@ async def wrap_awaitable(awaitable: Awaitable[T]):
     return await awaitable
 
 
-def in_anyio_worker():
+class _NotAsyncWorker:
+    pass
+
+
+def run_in_anyio_worker(
+    awaitable: Callable[[], Awaitable[T]],
+) -> Union[T, Type[_NotAsyncWorker]]:
+    """Code are copied from anyio.from_thread.run to catch the case that not in anyio worker thread."""
     try:
-        from anyio import from_thread
+        from anyio._core._eventloop import threadlocals
     except ImportError:
-        return False
+        return _NotAsyncWorker
     else:
-
-        async def _():
-            return None
-
         try:
-            from_thread.run(_)
-        except RuntimeError:
-            return False
-        return True
+            async_backend = threadlocals.current_async_backend
+            token = threadlocals.current_token
+        except AttributeError:
+            return _NotAsyncWorker
+
+        return async_backend.run_async_from_thread(awaitable, args=(), token=token)
 
 
 AsyncBackend = Literal["auto", "anyio_worker", "asyncio"]
@@ -40,11 +45,10 @@ def bwait(awaitable: Awaitable[T], backend: AsyncBackend = "auto") -> T:
     Blocks until an awaitable completes and returns its result.
     """
     if backend in ("auto", "anyio_worker"):
-        if in_anyio_worker():
-            from anyio import from_thread
-
-            return from_thread.run(lambda: awaitable)
-        if backend == "anyio_worker":
+        res = run_in_anyio_worker(lambda: awaitable)
+        if res is not _NotAsyncWorker:
+            return res  # type: ignore
+        elif backend == "anyio_worker":
             raise RuntimeError("Not in anyio worker thread")
 
     # Detect usable loop
