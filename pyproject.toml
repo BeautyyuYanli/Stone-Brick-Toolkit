@@ -6,7 +6,7 @@ authors = [
     {name = "Yanli",email = "mail@yanli.one"},
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 urls = {"Repository"= "https://github.com/BeautyyuYanli/Stone-Brick-Toolkit"}
