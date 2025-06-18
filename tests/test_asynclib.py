@@ -1,6 +1,5 @@
 import asyncio
 import time
-import pytest
 
 from stone_brick.asynclib import CWaitable, await_c, bwait, gather
 
@@ -88,6 +87,7 @@ def test_cwait_parallel():
 
 def test_gather_basic():
     """Test basic gather functionality with successful coroutines"""
+
     async def delay_and_return(sec: float, value: int) -> int:
         await asyncio.sleep(sec)
         return value
@@ -107,6 +107,7 @@ def test_gather_basic():
 
 def test_gather_with_exceptions():
     """Test gather functionality when some coroutines raise exceptions"""
+
     async def success_coro(value: int) -> int:
         await asyncio.sleep(0.1)
         return value
@@ -124,11 +125,11 @@ def test_gather_with_exceptions():
         return results
 
     results = asyncio.run(run_test())
-    
+
     # First and third should be successful
     assert results[0] == 1
     assert results[2] == 3
-    
+
     # Second should be an exception
     assert isinstance(results[1], ValueError)
     assert str(results[1]) == "test error"
@@ -136,6 +137,7 @@ def test_gather_with_exceptions():
 
 def test_gather_empty():
     """Test gather with no coroutines"""
+
     async def run_test():
         results = await gather()
         return results
@@ -146,6 +148,7 @@ def test_gather_empty():
 
 def test_gather_single_coroutine():
     """Test gather with a single coroutine"""
+
     async def single_coro() -> str:
         await asyncio.sleep(0.1)
         return "single"
@@ -160,6 +163,7 @@ def test_gather_single_coroutine():
 
 def test_gather_batch_size_unlimited():
     """Test gather with default unlimited batch size"""
+
     async def delay_coro(delay: float, value: int) -> int:
         await asyncio.sleep(delay)
         return value
@@ -177,7 +181,7 @@ def test_gather_batch_size_unlimited():
         return results, t1 - t0
 
     results, elapsed = asyncio.run(run_test())
-    
+
     assert results == [1, 2, 3, 4]
     # Should complete in ~0.2 seconds since all run concurrently
     assert elapsed < 0.4  # Allow some tolerance
@@ -185,6 +189,7 @@ def test_gather_batch_size_unlimited():
 
 def test_gather_batch_size_limited():
     """Test gather with limited batch size"""
+
     async def delay_coro(delay: float, value: int) -> int:
         await asyncio.sleep(delay)
         return value
@@ -197,21 +202,22 @@ def test_gather_batch_size_limited():
             delay_coro(0.2, 2),
             delay_coro(0.2, 3),
             delay_coro(0.2, 4),
-            batch_size=2
+            batch_size=2,
         )
         t1 = time.time()
         return results, t1 - t0
 
     results, elapsed = asyncio.run(run_test())
-    
+
     assert results == [1, 2, 3, 4]
     # Should take ~0.4 seconds (2 batches of 0.2 seconds each)
     assert elapsed > 0.35  # Should be longer than single batch
-    assert elapsed < 0.6   # But not too long
+    assert elapsed < 0.6  # But not too long
 
 
 def test_gather_batch_size_one():
     """Test gather with batch size of 1 (sequential execution)"""
+
     async def delay_coro(delay: float, value: int) -> int:
         await asyncio.sleep(delay)
         return value
@@ -219,16 +225,13 @@ def test_gather_batch_size_one():
     async def run_test():
         t0 = time.time()
         results = await gather(
-            delay_coro(0.1, 1),
-            delay_coro(0.1, 2),
-            delay_coro(0.1, 3),
-            batch_size=1
+            delay_coro(0.1, 1), delay_coro(0.1, 2), delay_coro(0.1, 3), batch_size=1
         )
         t1 = time.time()
         return results, t1 - t0
 
     results, elapsed = asyncio.run(run_test())
-    
+
     assert results == [1, 2, 3]
     # Should take ~0.3 seconds (3 tasks × 0.1 seconds each)
     assert elapsed > 0.25
@@ -237,6 +240,7 @@ def test_gather_batch_size_one():
 
 def test_gather_mixed_types():
     """Test gather with coroutines returning different types"""
+
     async def int_coro() -> int:
         await asyncio.sleep(0.1)
         return 42
