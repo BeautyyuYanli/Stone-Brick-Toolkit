@@ -18,6 +18,7 @@ TRes = TypeVar("TRes")
 
 
 class StreamRunner(Generic[TStream, TRes]):
+    _closed: bool
     _result: TRes | NoResult
     _consumer: MemoryObjectReceiveStream[TStream]
     producer: MemoryObjectSendStream[TStream]
@@ -29,18 +30,24 @@ class StreamRunner(Generic[TStream, TRes]):
         return self._result
 
     def __init__(self):
+        self._closed = False
         self.producer, self._consumer = create_memory_object_stream(
             max_buffer_size=math.inf
         )
         self._result = NoResult()
 
     def __enter__(self):
+        if self._closed:
+            raise RuntimeError("StreamRunner is already closed")
         return self
 
     async def __aenter__(self):
+        if self._closed:
+            raise RuntimeError("StreamRunner is already closed")
         return self
 
     def close(self):
+        self._closed = True
         self.producer.close()
         self._consumer.close()
 
@@ -103,7 +110,6 @@ if __name__ == "__main__":
         ):
             async for event in loop:
                 print(event)
-            print(runner.result)
 
     async def example_2():
         """This example shows a case where the producer raise exception"""
@@ -114,7 +120,6 @@ if __name__ == "__main__":
         ):
             async for event in loop:
                 print(event)
-            print(runner.result)
 
     async def example_3():
         """This example shows a case where the consumer raise exception"""
@@ -125,7 +130,6 @@ if __name__ == "__main__":
             async for event in loop:
                 print(event)
                 raise Exception("Oops!")
-            print(runner.result)
 
     async def example_4():
         """This example shows a case where the consumer early exit"""
@@ -144,13 +148,19 @@ if __name__ == "__main__":
         anyio.run(example_2)
     except Exception as e:
         assert e.args[0] == "Hiya!"
+    else:
+        raise AssertionError("Should have raised an exception")
 
     try:
         anyio.run(example_3)
     except Exception as e:
         assert e.args[0] == "Oops!"
+    else:
+        raise AssertionError("Should have raised an exception")
 
     try:
         anyio.run(example_4)
     except Exception as e:
         assert isinstance(e, NoResult)
+    else:
+        raise AssertionError("Should have raised an exception")
