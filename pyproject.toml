@@ -110,4 +110,5 @@ dev = [
     "logfire>=2.5.0",
     "fastapi>=0.115.6",
     "sqlmodel",
+    "uvloop>=0.21.0",
 ]

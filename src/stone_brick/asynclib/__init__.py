@@ -5,6 +5,9 @@
 from stone_brick.asynclib.anyio_utils import gather
 from stone_brick.asynclib.bwait import bwait, bwaiter
 from stone_brick.asynclib.cwait import CWaitable, CWaitValue, await_c
+from stone_brick.asynclib.stream_runner import StreamRunner
+from stone_brick.asynclib.bg_runner import background_run
+from stone_brick.asynclib.common import NoResult
 
 __all__ = [
     "CWaitValue",
@@ -12,7 +15,7 @@ __all__ = [
     "await_c",
     "bwait",
     "bwaiter",
-    # "stream_to_thread",
-    # "stream_trans_to_thread",
     "gather",
+    "StreamRunner",
+    "NoResult",
 ]
