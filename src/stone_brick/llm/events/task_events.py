@@ -40,7 +40,7 @@ class TaskOutput(Generic[T]):
     """Represents a task output event"""
 
     event_type: Literal["task_output"] = "task_output"
-    task_output: T
+    data: T
 
 
 @dataclass(kw_only=True)
@@ -146,7 +146,7 @@ def print_task_event(e: TaskEvent[T]):
     if isinstance(event, TaskStart):
         print(f"Task start: {event.task_desc}")
     elif isinstance(event, TaskOutput):
-        print(f"Task output: {event.task_output}")
+        print(f"Task output: {event.data}")
     elif isinstance(event, TaskOutputStream):
         print("Task output stream:\n" + "=" * 60)
     elif isinstance(event, TaskOutputStreamDelta):
