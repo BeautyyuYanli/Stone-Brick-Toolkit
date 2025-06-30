@@ -32,7 +32,7 @@ TOutput = TypeVar("TOutput")
 
 @dataclass(kw_only=True)
 class PydanticAIDeps(Generic[TOutput]):
-    event_deps: EventDeps[TaskStatus[TOutput]]
+    event_deps: TaskEventDeps[TOutput]
 
     def spawn(self) -> Self:
         new_deps = copy(self)
@@ -82,6 +82,8 @@ P = ParamSpec("P")
 def flow_with_span(
     func: Callable[Concatenate[TEventDeps, P], Awaitable[T] | T],
 ) -> Callable[Concatenate[TEventDeps, P], Awaitable[T] | T]:
+    """This decorator is used to wrap a workflow with EventDeps, which will spawn a span for function call and send a `TaskStart`."""
+
     @wraps(func)
     async def wrapper(ctx: TEventDeps, *args: P.args, **kwargs: P.kwargs):
         # Spawn root span
@@ -104,6 +106,8 @@ def flow_with_span(
 def tool_with_span(
     func: Callable[Concatenate[RunContext[TDeps], P], Awaitable[T] | T],
 ) -> Callable[Concatenate[RunContext[TDeps], P], Awaitable[T] | T]:
+    """This decorator is used to wrap a Pydantic AI tool, which will spawn a span for the tool call and send a `TaskStart`."""
+
     @wraps(func)
     async def wrapper(ctx: RunContext[TDeps], *args: P.args, **kwargs: P.kwargs):
         # Spawn root span

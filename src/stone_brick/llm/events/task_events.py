@@ -141,7 +141,8 @@ T1 = TypeVar("T1")
 TaskStreamRunner: TypeAlias = StreamRunner[TaskEvent[T], T1]
 
 
-def print_task_event(event: Event[TaskStatus[T]]):
+def print_task_event(e: TaskEvent[T]):
+    event = e.content
     if isinstance(event, TaskStart):
         print(f"Task start: {event.task_desc}")
     elif isinstance(event, TaskOutput):
