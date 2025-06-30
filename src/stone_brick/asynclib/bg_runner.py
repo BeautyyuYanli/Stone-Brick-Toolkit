@@ -1,4 +1,3 @@
-import math
 from contextlib import asynccontextmanager
 from typing import (
     Generic,
@@ -6,10 +5,9 @@ from typing import (
 )
 
 import anyio
-from anyio import create_memory_object_stream
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from exceptiongroup import BaseExceptionGroup
 from typing_extensions import Awaitable
+
 from stone_brick.asynclib.common import NoResult
 
 TStream = TypeVar("TStream")
@@ -25,9 +23,11 @@ class ResultContainer(Generic[TRes]):
             raise self._data
         return self._data
 
+
 @asynccontextmanager
 async def background_run(target: Awaitable[TRes]):
     result = ResultContainer()
+
     async def _warp():
         result._data = await target
 
@@ -39,9 +39,10 @@ async def background_run(target: Awaitable[TRes]):
         if exc_group.exceptions:
             raise exc_group.exceptions[0] from None
         raise
-    
+
 
 if __name__ == "__main__":
+
     async def foo():
         await anyio.sleep(3)
         return "Hello, world!"

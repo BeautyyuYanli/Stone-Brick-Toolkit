@@ -1,3 +1,2 @@
-
 class NoResult(Exception):
     pass

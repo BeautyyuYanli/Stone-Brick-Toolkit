@@ -1,7 +1,8 @@
-from typing import Generic, Optional, Self, Sequence, TypeVar, Union
+from typing import Generic, Optional, Sequence, TypeVar, Union
 
 from jwt import decode, encode
 from pydantic import BaseModel
+from typing_extensions import Self
 
 T = TypeVar("T")
 

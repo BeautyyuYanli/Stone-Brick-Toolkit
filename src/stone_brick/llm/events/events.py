@@ -1,17 +1,15 @@
-import math
+from copy import copy
 from dataclasses import dataclass, field
 from typing import (
     Generic,
     Optional,
     TypeVar,
 )
-from typing_extensions import Self
 from uuid import uuid4
 
-from anyio import create_memory_object_stream
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+from anyio.streams.memory import MemoryObjectSendStream
 from pydantic import BaseModel, Field
-from copy import copy
+from typing_extensions import Self
 
 T = TypeVar("T")
 
@@ -31,24 +29,24 @@ class Context(BaseModel):
 
 class Event(BaseModel, Generic[T]):
     ctx: Context | None = None
-    event_type: T
+    content: T
 
 
 TE = TypeVar("TE", bound=Event)
 
-@dataclass(kw_only=True)
-class EventDeps(Generic[TE]):
-    _event_span: Context = field(default_factory=lambda: Context())
-    _event_stream: tuple[MemoryObjectSendStream[TE], MemoryObjectReceiveStream[TE]] = field(
-        default_factory=lambda: create_memory_object_stream(max_buffer_size=math.inf)
-    )
 
-    async def event_send(self, event: TE):
-        event.ctx = event.ctx or self._event_span.spawn()
-        await self._event_stream[0].send(event)
+@dataclass()
+class EventDeps(Generic[T]):
+    producer: MemoryObjectSendStream[Event[T]]
+    span: Context = field(default_factory=lambda: Context())
 
+    async def send(self, content: T, as_root: bool = False):
+        if as_root:
+            await self.producer.send(Event(ctx=self.span, content=content))
+        else:
+            await self.producer.send(Event(ctx=self.span.spawn(), content=content))
 
     def spawn(self) -> Self:
         another_deps = copy(self)
-        another_deps._event_span = self._event_span.spawn()
+        another_deps.span = self.span.spawn()
         return another_deps
