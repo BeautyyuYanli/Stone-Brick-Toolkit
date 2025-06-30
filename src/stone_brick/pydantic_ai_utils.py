@@ -72,7 +72,7 @@ async def prod_run(
 ) -> AgentRunResult[T]:
     """Run the agent and produce `TaskEvent` stream into a channel inside the `deps`. Finally return a `AgentRunResult`."""
     result = await run
-    await deps.send(TaskOutput(task_output=result.output))
+    await deps.send(TaskOutput(data=result.output))
     return result
 
 
