@@ -151,6 +151,6 @@ def print_task_event(e: TaskEvent[T]):
         print("Task output stream:\n" + "=" * 60)
     elif isinstance(event, TaskOutputStreamDelta):
         if event.stopped:
-            print("=" * 60)
+            print("\n" + "=" * 60)
         else:
             print(event.delta, end="", flush=True)
