@@ -7,9 +7,12 @@ from typing import (
 )
 from uuid import uuid4
 
-from anyio.streams.memory import MemoryObjectSendStream
+from anyio.streams.memory import MemoryObjectSendStream, ClosedResourceError
 from pydantic import BaseModel, Field
 from typing_extensions import Self
+
+import logging
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -41,10 +44,13 @@ class EventDeps(Generic[T]):
     span: Context = field(default_factory=lambda: Context())
 
     async def send(self, content: T, as_root: bool = False):
-        if as_root:
-            await self.producer.send(Event(ctx=self.span, content=content))
-        else:
-            await self.producer.send(Event(ctx=self.span.spawn(), content=content))
+        try:
+            if as_root:
+                await self.producer.send(Event(ctx=self.span, content=content))
+            else:
+                await self.producer.send(Event(ctx=self.span.spawn(), content=content))
+        except ClosedResourceError:
+            logger.warning("Event producer is closed", exc_info=True)
 
     def spawn(self) -> Self:
         another_deps = copy(self)
