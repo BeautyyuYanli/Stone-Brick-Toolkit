@@ -21,7 +21,7 @@ def cast_type(t: Type[T], data: Any) -> T:
 
 def _get_str_from_env(k: str) -> str:
     # Check if the entire string matches ${VALUE} pattern
-    pattern = r'^\$\{([^}]+)\}$'
+    pattern = r"^\$\{([^}]+)\}$"
     match = re.match(pattern, k)
     if match:
         env_var_name = match.group(1)
@@ -31,7 +31,8 @@ def _get_str_from_env(k: str) -> str:
         else:
             return v
     else:
-        raise ValueError("This field must be the pattern of ${VALUE}")
-    
+        return k
+
+
 T = TypeVar("T")
 EnvVar: TypeAlias = Annotated[T, BeforeValidator(_get_str_from_env)]
