@@ -18,7 +18,6 @@ from typing_extensions import Concatenate, ParamSpec, Self
 from stone_brick.llm import (
     EventDeps,
     TaskEventDeps,
-    TaskOutput,
     TaskOutputStream,
     TaskOutputStreamDelta,
     TaskStart,
@@ -65,16 +64,6 @@ async def prod_run_stream(
             await stream_deps.send(TaskOutputStreamDelta(delta=result))
         await stream_deps.send(TaskOutputStreamDelta(delta="", stopped=True))
         return response
-
-
-async def prod_run(
-    deps: EventDeps[TaskStatus], run: Awaitable[AgentRunResult[T]]
-) -> AgentRunResult[T]:
-    """Run the agent and produce `TaskEvent` stream into a channel inside the `deps`. Finally return a `AgentRunResult`."""
-    result = await run
-    await deps.send(TaskOutput(data=result.output))
-    return result
-
 
 P = ParamSpec("P")
 
@@ -145,9 +134,7 @@ async def agent_run(
     """
     async with (
         TaskStreamRunner[TOutput, AgentRunResult[T]]() as runner,
-        runner.run(
-            prod_run(TaskEventDeps[TOutput](runner.producer), run),
-        ) as loop,
+        runner.run( run ) as loop,
     ):
         async for event in loop:
             yield event
