@@ -2,7 +2,6 @@ from contextlib import AbstractAsyncContextManager
 from copy import copy
 from dataclasses import dataclass
 from functools import wraps
-from inspect import isawaitable
 from typing import (
     Awaitable,
     Callable,
@@ -65,12 +64,13 @@ async def prod_run_stream(
         await stream_deps.send(TaskOutputStreamDelta(delta="", stopped=True))
         return response
 
+
 P = ParamSpec("P")
 
 
 def flow_with_span(
-    func: Callable[Concatenate[TEventDeps, P], Awaitable[T] | T],
-) -> Callable[Concatenate[TEventDeps, P], Awaitable[T] | T]:
+    func: Callable[Concatenate[TEventDeps, P], Awaitable[T]],
+) -> Callable[Concatenate[TEventDeps, P], Awaitable[T]]:
     """This decorator is used to wrap a workflow with EventDeps, which will spawn a span for function call and send a `TaskStart`."""
 
     @wraps(func)
@@ -82,19 +82,14 @@ def flow_with_span(
             as_root=True,
         )
         # Execute the actual function
-        func_call = func(new_ctx, *args, **kwargs)
-        if isawaitable(func_call):
-            result = await func_call
-        else:
-            result = func_call
-        return result
+        return await func(new_ctx, *args, **kwargs)
 
     return wrapper
 
 
 def tool_with_span(
-    func: Callable[Concatenate[RunContext[TDeps], P], Awaitable[T] | T],
-) -> Callable[Concatenate[RunContext[TDeps], P], Awaitable[T] | T]:
+    func: Callable[Concatenate[RunContext[TDeps], P], Awaitable[T]],
+) -> Callable[Concatenate[RunContext[TDeps], P], Awaitable[T]]:
     """This decorator is used to wrap a Pydantic AI tool, which will spawn a span for the tool call and send a `TaskStart`."""
 
     @wraps(func)
@@ -106,12 +101,7 @@ def tool_with_span(
             as_root=True,
         )
         # Execute the actual function
-        func_call = func(new_ctx, *args, **kwargs)
-        if isawaitable(func_call):
-            result = await func_call
-        else:
-            result = func_call
-        return result
+        return await func(new_ctx, *args, **kwargs)
 
     return wrapper
 
@@ -134,7 +124,7 @@ async def agent_run(
     """
     async with (
         TaskStreamRunner[TOutput, AgentRunResult[T]]() as runner,
-        runner.run( run ) as loop,
+        runner.run(run) as loop,
     ):
         async for event in loop:
             yield event

@@ -60,7 +60,6 @@ class TaskOutputStreamDelta:
     stopped: bool = False
 
 
-
 TaskStatus: TypeAlias = (
     TaskStart | TaskOutputStream | TaskOutputStreamDelta | TaskOutput[T]
 )
